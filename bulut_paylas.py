@@ -1,4 +1,4 @@
-"""GitHub Actions'ta calisan bulut paylasimcisi.
+﻿"""GitHub Actions'ta calisan bulut paylasimcisi.
 
 Stok: bu deponun "stok" adli GitHub Release'indeki .mp4 + .txt dosyalari.
 Her calismada: Instagram'daki son paylasim en az ARALIK dakika once ise,
@@ -19,7 +19,7 @@ from pathlib import Path
 
 API = "https://graph.facebook.com/v21.0"
 UPLOAD = "https://rupload.facebook.com/ig-api-upload/v21.0"
-ARALIK = int(os.environ.get("ARALIK_DK", "88"))
+ARALIK = int(os.environ.get("ARALIK_DK", "80"))
 TOKEN = os.environ["IG_TOKEN"]
 IG_ID = os.environ["IG_ID"]
 
