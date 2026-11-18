@@ -1,0 +1,29 @@
+name: Reels paylas
+
+on:
+  schedule:
+    - cron: "7,37 * * * *"   # her 30 dakikada kontrol; son paylasimdan 88 dk gectiyse paylasir
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: paylas
+  cancel-in-progress: false
+
+jobs:
+  paylas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Stoktan paylas
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          IG_ID: ${{ secrets.IG_ID }}
+          GH_TOKEN: ${{ github.token }}
+        run: python bulut_paylas.py
