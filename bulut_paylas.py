@@ -1,4 +1,4 @@
-﻿"""GitHub Actions'ta calisan bulut paylasimcisi.
+"""GitHub Actions'ta calisan bulut paylasimcisi.
 
 Stok: bu deponun "stok" adli GitHub Release'indeki .mp4 + .txt dosyalari.
 Her calismada: Instagram'daki son paylasim en az ARALIK dakika once ise,
@@ -47,6 +47,23 @@ def son_paylasim_dk():
     return (datetime.now(timezone.utc) - ts).total_seconds() / 60
 
 
+def yukle_yayinla(video, aciklama):
+    kap = istek(f"{API}/{IG_ID}/media", {"media_type": "REELS", "upload_type": "resumable", "caption": aciklama,
+                                         "share_to_feed": "true", "access_token": TOKEN})["id"]
+    veri = video.read_bytes()
+    istek(f"{UPLOAD}/{kap}", veri, {"Authorization": f"OAuth {TOKEN}", "offset": "0", "file_size": str(len(veri))})
+    for _ in range(60):
+        dur = istek(f"{API}/{kap}?fields=status_code,status&access_token={TOKEN}")
+        if dur.get("status_code") == "FINISHED":
+            break
+        if dur.get("status_code") in ("ERROR", "EXPIRED"):
+            raise RuntimeError(f"Instagram isleyemedi: {dur.get('status')}")
+        time.sleep(10)
+    else:
+        raise RuntimeError("Isleme 10 dakikada bitmedi")
+    return istek(f"{API}/{IG_ID}/media_publish", {"creation_id": kap, "access_token": TOKEN})
+
+
 def main():
     gecen = son_paylasim_dk()
     if gecen < ARALIK:
@@ -66,20 +83,19 @@ def main():
     aciklama = (Path("indir") / txt).read_text(encoding="utf-8").strip() if (Path("indir") / txt).exists() else ""
     print(f"Paylasiliyor: {ad}")
 
-    kap = istek(f"{API}/{IG_ID}/media", {"media_type": "REELS", "upload_type": "resumable", "caption": aciklama,
-                                         "share_to_feed": "true", "access_token": TOKEN})["id"]
-    veri = video.read_bytes()
-    istek(f"{UPLOAD}/{kap}", veri, {"Authorization": f"OAuth {TOKEN}", "offset": "0", "file_size": str(len(veri))})
-    for _ in range(60):
-        dur = istek(f"{API}/{kap}?fields=status_code,status&access_token={TOKEN}")
-        if dur.get("status_code") == "FINISHED":
+    for deneme in range(4):
+        try:
+            sonuc = yukle_yayinla(video, aciklama)
             break
-        if dur.get("status_code") in ("ERROR", "EXPIRED"):
-            raise RuntimeError(f"Instagram isleyemedi: {dur.get('status')}")
-        time.sleep(10)
-    else:
-        raise RuntimeError("Isleme 10 dakikada bitmedi")
-    sonuc = istek(f"{API}/{IG_ID}/media_publish", {"creation_id": kap, "access_token": TOKEN})
+        except RuntimeError as e:
+            print(f"Deneme {deneme + 1} basarisiz: {e}")
+            if deneme == 3:
+                # sirayi kilitlemesin: bozuk videoyu stoktan cikar (bilgisayarda kopyasi var)
+                for a in (ad, txt):
+                    if any(x["name"] == a for x in varliklar):
+                        gh("release", "delete-asset", "stok", a, "--yes")
+                raise
+            time.sleep(30)
     print(f"YAYINLANDI medya id: {sonuc['id']}")
     for a in (ad, txt):
         if any(x["name"] == a for x in varliklar):
