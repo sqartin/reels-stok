@@ -19,7 +19,7 @@ from pathlib import Path
 
 API = "https://graph.facebook.com/v21.0"
 UPLOAD = "https://rupload.facebook.com/ig-api-upload/v21.0"
-ARALIK = int(os.environ.get("ARALIK_DK", "80"))
+ARALIK = int(os.environ.get("ARALIK_DK", "115"))
 TOKEN = os.environ["IG_TOKEN"]
 IG_ID = os.environ["IG_ID"]
 
@@ -53,7 +53,7 @@ def main():
         print(f"Son paylasim {gecen:.0f} dk once, bekleniyor.")
         return
     varliklar = json.loads(gh("release", "view", "stok", "--json", "assets"))["assets"]
-    videolar = sorted([a for a in varliklar if a["name"].endswith(".mp4")], key=lambda a: a["createdAt"])
+    videolar = sorted([a for a in varliklar if a["name"].endswith(".mp4")], key=lambda a: (not a["name"].startswith("kesit_"), a["createdAt"]))
     if not videolar:
         print("Stok bos.")
         return
