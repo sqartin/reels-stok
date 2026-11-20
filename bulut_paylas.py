@@ -19,7 +19,7 @@ from pathlib import Path
 
 API = "https://graph.facebook.com/v21.0"
 UPLOAD = "https://rupload.facebook.com/ig-api-upload/v21.0"
-ARALIK = int(os.environ.get("ARALIK_DK", "115"))
+ARALIK = int(os.environ.get("ARALIK_DK", "710"))
 TOKEN = os.environ["IG_TOKEN"]
 IG_ID = os.environ["IG_ID"]
 
